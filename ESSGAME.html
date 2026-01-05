@@ -1,0 +1,2374 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESS MANAGER -Story Edition-</title>
+    <style>
+       * { 
+    margin: 0; 
+    padding: 0; 
+    box-sizing: border-box; 
+}
+
+body {
+    font-family: 'Hiragino Kaku Gothic Pro', 'Meiryo', sans-serif;
+    color: #333;
+    line-height: 1.6;
+    min-height: 100vh;
+    position: relative;
+    overflow-x: hidden;
+}
+
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+        radial-gradient(circle at 20% 30%, rgba(102, 126, 234, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 70%, rgba(118, 75, 162, 0.1) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+#game-container {
+    max-width: 900px;
+    margin: 20px auto;
+    background: linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%);
+    border-radius: 24px;
+    box-shadow: 
+        0 30px 90px rgba(0,0,0,0.6),
+        0 0 0 1px rgba(255, 255, 255,0.1) inset,
+        0 0 40px rgba(102, 126, 234, 0.3);
+    min-height: 92vh;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    z-index: 1;
+    border: 3px solid rgba(102, 126, 234, 0.2);
+    animation: containerFloat 6s ease-in-out infinite;
+}
+
+@keyframes containerFloat {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-8px); }
+}
+
+header {
+    background: linear-gradient(135deg, #667eea 0%, #3faf69 50%, #92fcec 100%);
+    color: white;
+    padding: 24px;
+    border-radius: 24px 24px 0 0;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+}
+
+header::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+        45deg,
+        transparent 30%,
+        rgba(255, 255, 255, 0.1) 50%,
+        transparent 70%
+    );
+    animation: headerShine 3s ease-in-out infinite;
+}
+
+@keyframes headerShine {
+    0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+    100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+}
+
+header h2 {
+    position: relative;
+    z-index: 1;
+    font-size: 1.8em;
+    text-shadow: 
+        0 2px 10px rgba(0, 0, 0,0.3),
+        0 0 20px rgba(255, 255, 255,0.5);
+    letter-spacing: 2px;
+}
+
+#status-bar {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+    padding: 20px;
+    background: linear-gradient(180deg, #e8eaf6 0%, #f5f5f5 100%);
+    border-bottom: 2px solid rgba(102, 126, 234, 0.2);
+}
+
+.stat-box {
+    background: linear-gradient(145deg, #ffffff 0%, #fafafa 100%);
+    padding: 14px;
+    border-radius: 14px;
+    text-align: center;
+    box-shadow: 
+        0 4px 12px rgba(0,0,0,0.08),
+        0 0 0 1px rgba(102, 126, 234, 0.1) inset;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-box::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.1), transparent);
+    transition: left 0.5s;
+}
+
+.stat-box:hover {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 
+        0 8px 20px rgba(0, 0, 0,0.12),
+        0 0 0 2px rgba(102, 126, 234, 0.3) inset;
+}
+
+.stat-box:hover::before {
+    left: 100%;
+}
+
+.stat-label { 
+    font-size: 0.75em; 
+    color: #666; 
+    font-weight: bold; 
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+}
+
+.stat-value { 
+    font-size: 1.4em; 
+    font-weight: bold; 
+    background: linear-gradient(135deg, #667eea 0%, #4a8da4 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+#main-display {
+    flex-grow: 1;
+    padding: 24px;
+    overflow-y: auto;
+    background: linear-gradient(180deg, #fafafa 0%, #ffffff 100%);
+}
+
+.story-box {
+    background: linear-gradient(145deg, #ffffff 0%, #f8f9ff 100%);
+    border: 3px solid #47a775;
+    border-radius: 18px;
+    padding: 20px;
+    margin-bottom: 24px;
+    position: relative;
+    box-shadow: 
+        0 8px 24px rgba(77, 162, 162, 0.2),
+        0 0 0 1px rgba(255, 255, 255,0.5) inset;
+    animation: storyPulse 2s ease-in-out infinite;
+}
+
+@keyframes storyPulse {
+    0%, 100% { box-shadow: 0 8px 24px rgba(62, 176, 85, 0.2), 0 0 0 1px rgba(255, 255, 255,0.5) inset; }
+    50% { box-shadow: 0 8px 32px rgba(74, 164, 88, 0.35), 0 0 20px rgba(64, 174, 91, 0.2) inset; }
+}
+
+.story-box::before {
+    position: absolute;
+    top: -15px;
+    left: 20px;
+    font-size: 2em;
+    background: white;
+    padding: 0 8px;
+    border-radius: 50%;
+    box-shadow: 0 2px 8px rgba(0, 0, 0,0.1);
+}
+
+.char-name { 
+    font-weight: bold; 
+    color: #557199; 
+    margin-bottom: 8px;
+    font-size: 1.1em;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+#story-text {
+    font-size: 1.05em;
+    line-height: 1.8;
+    color: #2c3e50;
+}
+
+.member-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+    margin-top: 20px;
+}
+
+.member-card {
+    border: 3px solid #e0e0e0;
+    border-radius: 16px;
+    padding: 16px;
+    background: linear-gradient(145deg, #ffffff 0%, #fafafa 100%);
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0,0.08);
+}
+
+.member-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, #667eea 0%, #34ba63 100%);
+    transform: scaleX(0);
+    transition: transform 0.3s ease;
+}
+
+.member-card:hover {
+    border-color: #54709a;
+    transform: translateY(-5px) scale(1.02);
+    box-shadow: 
+        0 12px 28px rgba(67, 171, 103, 0.3),
+        0 0 20px rgba(79, 159, 97, 0.1);
+}
+
+.member-card:hover::before {
+    transform: scaleX(1);
+}
+
+.member-card.selected {
+    border: 3px solid #3791b7;
+    background: linear-gradient(145deg, #e6f1f4 0%, #bad1eb 100%);
+    box-shadow: 
+        0 8px 24px rgba(69, 169, 162, 0.4),
+        0 0 30px rgba(56, 182, 163, 0.2) inset;
+    animation: selectedPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes selectedPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+}
+
+.member-card.graduating {
+    border: 3px solid #ff9800;
+    background: linear-gradient(145deg, #fff3e0 0%, #ffe0b2 100%);
+    box-shadow: 0 4px 16px rgba(255, 152, 0, 0.3);
+}
+
+.member-card.graduating::after {
+    content: '🎓';
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    font-size: 1.5em;
+    animation: graduateFloat 2s ease-in-out infinite;
+}
+
+@keyframes graduateFloat {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    50% { transform: translateY(-5px) rotate(10deg); }
+}
+
+.member-card.burnout {
+    border: 3px solid #f44336;
+    background: linear-gradient(145deg, #ffebee 0%, #ffcdd2 100%);
+    box-shadow: 0 4px 16px rgba(244, 67, 54, 0.3);
+    animation: burnoutShake 0.5s ease-in-out infinite;
+}
+
+@keyframes burnoutShake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-2px); }
+    75% { transform: translateX(2px); }
+}
+
+.progress-bar { 
+    height: 10px; 
+    background: linear-gradient(90deg, #e0e0e0 0%, #f5f5f5 100%); 
+    border-radius: 10px; 
+    margin: 8px 0; 
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1) inset;
+    position: relative;
+}
+
+.progress-bar::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255,0.3), transparent);
+    animation: progressShine 2s ease-in-out infinite;
+}
+
+@keyframes progressShine {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+.progress-fill { 
+    height: 100%; 
+    background: linear-gradient(90deg, #667eea 0%, #49a56b 100%); 
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 0 10px rgba(102, 126, 234, 0.5);
+    position: relative;
+}
+
+.progress-fill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 20px;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255,0.4));
+    border-radius: 0 10px 10px 0;
+}
+
+.recruit-card {
+    border: 3px solid #90caf9;
+    border-radius: 16px;
+    padding: 16px;
+    background: linear-gradient(145deg, #ffffff 0%, #e3f2fd 100%);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(2, 136, 209, 0.2);
+}
+
+.recruit-card::before {
+    content: '✨';
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    font-size: 1.5em;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.recruit-card:hover {
+    border-color: #0288d1;
+    transform: scale(1.05) rotate(1deg);
+    box-shadow: 0 12px 32px rgba(2, 136, 209, 0.4);
+}
+
+.recruit-card:hover::before {
+    opacity: 1;
+    animation: sparkle 1s ease-in-out infinite;
+}
+
+@keyframes sparkle {
+    0%, 100% { transform: scale(1) rotate(0deg); }
+    50% { transform: scale(1.2) rotate(180deg); }
+}
+
+.recruit-card.selected {
+    border: 3px solid #0288d1;
+    background: linear-gradient(145deg, #e1f5fe 0%, #b3e5fc 100%);
+    box-shadow: 
+        0 8px 24px rgba(2, 136, 209, 0.5),
+        0 0 30px rgba(2, 136, 209, 0.2) inset;
+    transform: scale(1.03);
+}
+
+#action-panel {
+    padding: 24px;
+    background: linear-gradient(180deg, #f5f5f5 0%, #e8eaf6 100%);
+    border-top: 2px solid rgba(102, 126, 234, 0.2);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0,0.05);
+}
+
+button {
+    padding: 14px 20px;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 1em;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+button::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255,0.5);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+button:hover::before {
+    width: 300px;
+    height: 300px;
+}
+
+.btn-action { 
+    background: linear-gradient(135deg, #e1f5fe 0%, #b3e5fc 100%); 
+    color: #0277bd; 
+    border: 2px solid #0288d1;
+}
+
+.btn-action:hover:not(:disabled) {
+    background: linear-gradient(135deg, #b3e5fc 0%, #81d4fa 100%);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(2, 136, 209, 0.4);
+}
+
+.btn-choice { 
+    background: linear-gradient(135deg, #fce4ec 0%, #f8bbd0 100%); 
+    color: #ad1457; 
+    border: 2px solid #c2185b;
+}
+
+.btn-choice:hover:not(:disabled) {
+    background: linear-gradient(135deg, #f8bbd0 0%, #f48fb1 100%);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(194, 24, 91, 0.4);
+}
+
+.btn-next { 
+    grid-column: span 2; 
+    background: linear-gradient(135deg, #4b71e0 0%, #4a79a4 100%); 
+    color: white; 
+    margin-top: 10px;
+    border: 2px solid rgba(255,255,255,0.3);
+    font-size: 1.1em;
+    letter-spacing: 1px;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.btn-next:hover:not(:disabled) {
+    background: linear-gradient(135deg, #269aae 0%, #b9eaec 100%);
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 12px 32px rgba(62, 176, 85, 0.5);
+}
+
+button:disabled { 
+    background: linear-gradient(135deg, #e0e0e0 0%, #bdbdbd 100%); 
+    cursor: not-allowed; 
+    border: 2px solid #9e9e9e;
+    color: #757575;
+    opacity: 0.6;
+    transform: none !important;
+}
+
+.hidden { 
+    display: none !important; 
+}
+
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    animation: modalFadeIn 0.3s ease;
+    backdrop-filter: blur(8px);
+}
+
+@keyframes modalFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+
+
+
+
+
+.modal-content {
+    background: linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%);
+    padding: 36px;
+    border-radius: 24px;
+    max-width: 700px;
+    max-height: 85vh;    
+    width: 90%;  /* ←追加: レスポンシブ対応 */
+    margin: 0 auto;  /* ←追加: 中央揃え */
+    overflow-y: auto;
+    box-shadow: 
+        0 30px 90px rgba(0,0,0,0.5),
+        0 0 0 1px rgba(255,255,255,0.5) inset;
+    animation: modalSlideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 3px solid rgba(102, 126, 234, 0.3);
+}
+
+@keyframes modalSlideIn {
+    from { 
+        transform: translateY(-50px) scale(0.9); 
+        opacity: 0;
+    }
+    to { 
+        transform: translateY(0) scale(1); 
+        opacity: 1;
+    }
+}
+
+.modal-content h2 {
+    background: linear-gradient(135deg, #667eea 0%, #556499 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-size: 2em;
+}
+
+.result-box {
+    background: linear-gradient(135deg, #ffd700 0%, #ffed4e 50%, #ffd700 100%);
+    padding: 28px;
+    border-radius: 20px;
+    margin: 24px 0;
+    text-align: center;
+    font-size: 1.6em;
+    font-weight: bold;
+    color: #333;
+    box-shadow: 
+        0 8px 24px rgba(255, 215, 0, 0.4),
+        0 0 40px rgba(255, 215, 0, 0.3) inset;
+    animation: resultShine 2s ease-in-out infinite;
+    border: 3px solid #ffb300;
+}
+
+@keyframes resultShine {
+    0%, 100% { 
+        box-shadow: 0 8px 24px rgba(255, 215, 0, 0.4), 0 0 40px rgba(255, 215, 0, 0.3) inset; 
+    }
+    50% { 
+        box-shadow: 0 12px 36px rgba(255, 215, 0, 0.6), 0 0 60px rgba(255, 215, 0, 0.5) inset; 
+    }
+}
+
+.trait-tag {
+    display: inline-block;
+    padding: 4px 10px;
+    margin: 3px;
+    border-radius: 16px;
+    font-size: 0.8em;
+    font-weight: bold;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    transition: all 0.3s ease;
+}
+
+.trait-tag:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0,0.25);
+}
+
+.trait-active { background: linear-gradient(135deg, #c8e6c9 0%, #a5d6a7 100%); color: #1b5e20; border: 2px solid #43a047; }
+.trait-passive { background: linear-gradient(135deg, #ffccbc 0%, #ffab91 100%); color: #bf360c; border: 2px solid #e64a19; }
+.trait-leader { background: linear-gradient(135deg, #fff9c4 0%, #fff59d 100%); color: #f57f17; border: 2px solid #fbc02d; }
+.trait-steady { background: linear-gradient(135deg, #bbdefb 0%, #90caf9 100%); color: #0d47a1; border: 2px solid #1976d2; }
+.trait-cheerful { background: linear-gradient(135deg, #f8bbd0 0%, #f48fb1 100%); color: #880e4f; border: 2px solid #c2185b; }
+.trait-cautious { background: linear-gradient(135deg, #d1c4e9 0%, #b39ddb 100%); color: #311b92; border: 2px solid #512da8; }
+.trait-lazy { background: linear-gradient(135deg, #e0e0e0 0%, #bdbdbd 100%); color: #212121; border: 2px solid #616161; }
+.trait-excellent { background: linear-gradient(135deg, #b2dfdb 0%, #80cbc4 100%); color: #004d40; border: 2px solid #00695c; }
+
+.burnout-warning {
+    background: linear-gradient(145deg, #ffebee 0%, #ffcdd2 100%);
+    border: 3px solid #f44336;
+    padding: 16px;
+    border-radius: 14px;
+    margin: 16px 0;
+    color: #b71c1c;
+    font-weight: bold;
+    box-shadow: 
+        0 6px 20px rgba(244, 67, 54, 0.3),
+        0 0 20px rgba(244, 67, 54, 0.1) inset;
+    animation: warningPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes warningPulse {
+    0%, 100% { 
+        transform: scale(1); 
+        box-shadow: 0 6px 20px rgba(244, 67, 54, 0.3), 0 0 20px rgba(244, 67, 54, 0.1) inset; 
+    }
+    50% { 
+        transform: scale(1.02); 
+        box-shadow: 0 8px 28px rgba(244, 67, 54, 0.5), 0 0 30px rgba(244, 67, 54, 0.2) inset; 
+    }
+}
+
+/* スクロールバーのカスタマイズ */
+::-webkit-scrollbar {
+    width: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #667eea 0%, #55a24d 100%);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #4ea06a 0%, #a4ccea 100%);
+}
+
+/* タイトル画面専用スタイル */
+#title-screen {
+    background: linear-gradient(135deg, #e1e6fb 0%, #e1f9f3 50%, #f8fefb 100%);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    color: black;
+    animation: titleGradient 5s ease infinite;
+    background-size: 200% 200%;
+}
+
+@keyframes titleGradient {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+}
+
+#title-screen h1 {
+    font-size: 3.5em;
+    text-shadow: 
+        0 4px 20px rgba(0, 0, 0,0.4),
+        0 0 40px rgba(255,255,255,0.5);
+    animation: titleFloat 3s ease-in-out infinite;
+    margin-bottom: 20px;
+}
+
+@keyframes titleFloat {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-15px); }
+}
+
+#title-screen p {
+    font-size: 1.3em;
+    text-shadow: 0 2px 10px rgba(0, 0, 0,0.3);
+    margin: 30px 0;
+    animation: titleFade 2s ease-in-out infinite;
+}
+
+@keyframes titleFade {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+
+/* 実績ボタン */
+.achievement-button {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+    color: #333;
+    border: 3px solid #ffb300;
+    border-radius: 12px;
+    padding: 10px 16px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4);
+    transition: all 0.3s ease;
+    z-index: 10;
+}
+
+.achievement-button:hover {
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 8px 20px rgba(255, 215, 0, 0.6);
+}
+
+.achievement-badge {
+    background: rgba(255, 255, 255, 0.3);
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.85em;
+    margin-left: 5px;
+}
+
+/* 実績モーダル */
+.achievement-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 16px;
+    margin-top: 20px;
+}
+
+.achievement-card {
+    background: linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%);
+    border: 3px solid #e0e0e0;
+    border-radius: 16px;
+    padding: 20px;
+    text-align: center;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.achievement-card.unlocked {
+    border-color: #ffd700;
+    background: linear-gradient(145deg, #fffbea 0%, #fff9c4 100%);
+    box-shadow: 0 8px 24px rgba(255, 215, 0, 0.3);
+}
+
+.achievement-card.locked {
+    opacity: 0.5;
+    filter: grayscale(0.8);
+}
+
+.achievement-icon {
+    font-size: 3em;
+    margin-bottom: 10px;
+    display: block;
+}
+
+.achievement-card.unlocked .achievement-icon {
+    animation: iconPop 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes iconPop {
+    0% { transform: scale(0); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+
+.achievement-name {
+    font-weight: bold;
+    font-size: 1.1em;
+    color: #333;
+    margin: 10px 0 5px;
+}
+
+.achievement-desc {
+    font-size: 0.9em;
+    color: #666;
+    line-height: 1.4;
+}
+
+.achievement-date {
+    font-size: 0.75em;
+    color: #999;
+    margin-top: 8px;
+    font-style: italic;
+}
+
+/* 実績解除通知 */
+.achievement-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+    border: 3px solid #ffb300;
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 8px 32px rgba(255, 215, 0, 0.5);
+    z-index: 3000;
+    animation: notificationSlideIn 0.5s ease, notificationShine 2s ease-in-out infinite;
+    min-width: 300px;
+}
+
+@keyframes notificationSlideIn {
+    from {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes notificationShine {
+    0%, 100% {
+        box-shadow: 0 8px 32px rgba(255, 215, 0, 0.5);
+    }
+    50% {
+        box-shadow: 0 12px 48px rgba(255, 215, 0, 0.8);
+    }
+}
+
+.notification-content {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.notification-icon {
+    font-size: 2.5em;
+    animation: iconRotate 1s ease-in-out infinite;
+}
+
+@keyframes iconRotate {
+    0%, 100% { transform: rotate(0deg) scale(1); }
+    25% { transform: rotate(-10deg) scale(1.1); }
+    75% { transform: rotate(10deg) scale(1.1); }
+}
+
+.notification-text {
+    flex: 1;
+}
+
+.notification-title {
+    font-weight: bold;
+    font-size: 1.2em;
+    color: #333;
+    margin-bottom: 5px;
+}
+
+.notification-desc {
+    font-size: 0.95em;
+    color: #555;
+}
+
+/* イベントカード */
+.event-card-modal {
+    background: rgba(0, 0, 0, 0.9);
+    backdrop-filter: blur(10px);
+}
+
+.event-card {
+    background: linear-gradient(145deg, #ffffff 0%, #f8f9ff 100%);
+    border: 4px solid;
+    border-radius: 20px;
+    padding: 30px;
+    max-width: 500px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+    animation: cardFlip 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+@keyframes cardFlip {
+    0% {
+        transform: perspective(1000px) rotateY(90deg) scale(0.8);
+        opacity: 0;
+    }
+    100% {
+        transform: perspective(1000px) rotateY(0deg) scale(1);
+        opacity: 1;
+    }
+}
+
+.event-card.positive {
+    border-color: #4caf50;
+    background: linear-gradient(145deg, #e8f5e9 0%, #c8e6c9 100%);
+}
+
+.event-card.negative {
+    border-color: #f44336;
+    background: linear-gradient(145deg, #ffebee 0%, #ffcdd2 100%);
+}
+
+.event-card.neutral {
+    border-color: #2196f3;
+    background: linear-gradient(145deg, #e3f2fd 0%, #bbdefb 100%);
+}
+
+.event-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+        45deg,
+        transparent 30%,
+        rgba(255, 255, 255, 0.3) 50%,
+        transparent 70%
+    );
+    animation: cardShine 3s ease-in-out infinite;
+}
+
+@keyframes cardShine {
+    0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+    100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+}
+
+.event-icon {
+    font-size: 4em;
+    text-align: center;
+    margin-bottom: 20px;
+    animation: eventIconBounce 1s ease-in-out infinite;
+    position: relative;
+    z-index: 1;
+}
+
+@keyframes eventIconBounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+.event-title {
+    font-size: 1.8em;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 15px;
+    color: #333;
+    position: relative;
+    z-index: 1;
+}
+
+.event-description {
+    font-size: 1.1em;
+    line-height: 1.6;
+    color: #555;
+    margin-bottom: 20px;
+    text-align: center;
+    position: relative;
+    z-index: 1;
+}
+
+.event-effects {
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 12px;
+    padding: 15px;
+    margin: 20px 0;
+    position: relative;
+    z-index: 1;
+}
+
+.event-effect-item {
+    padding: 8px 0;
+    font-weight: bold;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.event-effect-positive {
+    color: #2e7d32;
+}
+
+.event-effect-negative {
+    color: #c62828;
+}
+
+/* セーブ/ロードパネル */
+#save-load-panel {
+    background: linear-gradient(180deg, #f5f5f5 0%, #e8eaf6 100%);
+    border-radius: 12px;
+    padding: 15px;
+    margin: 10px 0;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+
+/* スマホ対応 */
+@media (max-width: 768px) {
+    #save-load-panel {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* 実績ボタンのスタイル調整（パネル内に配置するため） */
+.achievement-button {
+    background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+    color: #333;
+    border: 3px solid #ffb300;
+    border-radius: 12px;
+    padding: 14px 20px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4);
+    transition: all 0.3s ease;
+    font-size: 1em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.achievement-button:hover {
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 8px 20px rgba(255, 215, 0, 0.6);
+}
+
+
+.save-slot {
+    background: linear-gradient(145deg, #ffffff 0%, #fafafa 100%);
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 15px;
+    margin: 10px 0;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.save-slot:hover {
+    border-color: #667eea;
+    transform: translateX(5px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+}
+
+.save-slot.empty {
+    opacity: 0.6;
+    font-style: italic;
+    color: #999;
+}
+
+.save-slot-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.save-slot-title {
+    font-weight: bold;
+    font-size: 1.1em;
+    color: #333;
+}
+
+.save-slot-date {
+    font-size: 0.85em;
+    color: #666;
+}
+
+.save-slot-info {
+    font-size: 0.9em;
+    color: #555;
+    display: flex;
+    gap: 15px;
+}
+
+/* パルス効果（新規実績解除時） */
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <div id="title-screen" style="padding: 60px; text-align: center;">
+        <h1 style="font-size: 3em; color: #529c7c;">ESS MANAGER</h1>
+        <p style="margin: 20px 0;">～攻略方法は<a href="exp.html"> こちら</a>～</p>
+        <button onclick="initGame()" class="btn-next" style="padding: 20px;">物語を始める</button>
+    </div>
+
+
+
+<div id="game-main" class="hidden">
+    <!-- セーブ/ロード/実績ボタンパネル -->
+    <div id="save-load-panel">
+        <button onclick="saveGame()" class="btn-action" style="flex: 1;">💾 セーブ</button>
+        <button onclick="loadGame()" class="btn-action" style="flex: 1;">📂 ロード</button>
+        <button onclick="showAchievementModal()" class="achievement-button">
+            🏆 実績 <span id="achievement-count" class="achievement-badge">0/12</span>
+        </button>
+    </div>
+
+<!-- ランダムイベントカード表示用（モーダルとして表示） -->
+<div id="event-card-container"></div>
+
+<!-- 実績解除通知用 -->
+<div id="achievement-notification" class="achievement-notification hidden">
+    <div class="notification-content">
+        <div class="notification-icon">🏆</div>
+        <div class="notification-text">
+            <div class="notification-title">実績解除！</div>
+            <div class="notification-desc"></div>
+        </div>
+    </div>
+</div>
+    
+    
+    
+        <header>
+            <h2 id="display-week">第 1 週</h2>
+        </header>
+
+        <div id="status-bar">
+            <div class="stat-box"><div class="stat-label">年度</div><div class="stat-value" id="stat-year">1年目</div></div>
+            <div class="stat-box"><div class="stat-label">部費</div><div class="stat-value" id="stat-budget">¥0</div></div>
+            <div class="stat-box"><div class="stat-label">部員</div><div class="stat-value" id="stat-members">0</div></div>
+            <div class="stat-box"><div class="stat-label">英語力</div><div class="stat-value" id="stat-eng">0</div></div>
+            <div class="stat-box"><div class="stat-label">信頼</div><div class="stat-value" id="stat-trust">0</div></div>
+        </div>
+
+        <div id="main-display">
+            <div class="story-box">
+                <div id="char-name" class="char-name">橘</div>
+                <div id="story-text"></div>
+            </div>
+            <div id="member-list" class="member-grid"></div>
+        </div>
+
+        <div id="action-panel"></div>
+    </div>
+</div>
+
+<script>
+    const state = {
+        week: 1,
+        maxWeek: 10,
+        year: 1,
+        budget: 2000,
+        trust: 40,
+        members: [
+            { name: "山田", eng: 29, stress: 0, trait: "積極的", year: 3, growthRate: 1.2, burnout: false },
+            { name: "橘", eng: 55, stress: 0, trait: "リーダー", year: 5, growthRate: 0.5, burnout: false }
+        ],
+        hasActed: false,
+        contestWeek: 6,
+        contestDone: false
+    };
+
+    // 特性データベース
+    const traitData = {
+        "積極的": { growthRate: 0.75, stressRate: 1.0, cssClass: "trait-active", desc: "成長↑" },
+        "消極的": { growthRate: 0.4, stressRate: 0.8, cssClass: "trait-passive", desc: "成長↓" },
+        "リーダー": { growthRate: 0.55, stressRate: 0.7, cssClass: "trait-leader", desc: "信頼↑" },
+        "真面目": { growthRate: 0.5, stressRate: 1.2, cssClass: "trait-steady", desc: "標準" },
+        "元気": { growthRate: 0.6, stressRate: 0.6, cssClass: "trait-cheerful", desc: "疲れにくい" },
+        "慎重": { growthRate: 0.5, stressRate: 0.9, cssClass: "trait-cautious", desc: "安定" },
+        "のんびり": { growthRate: 0.43, stressRate: 0.5, cssClass: "trait-lazy", desc: "成長遅い" },
+        "優秀": { growthRate: 0.8, stressRate: 1.3, cssClass: "trait-excellent", desc: "成長◎疲れやすい" }
+    };
+
+    const recruitPool = [
+        { name: "川田", eng: 14, trait: "積極的", year: 3 },
+        { name: "西川", eng: 22, trait: "積極的", year: 1 },
+        { name: "朝倉", eng: 16, trait: "元気", year: 1 },
+        { name: "吉田", eng: 27, trait: "リーダー", year: 2 },
+        { name: "大前", eng: 18, trait: "消極的", year: 2 },
+        { name: "橋本", eng: 26, trait: "消極的", year: 2 },
+        { name: "佐藤", eng: 22, trait: "真面目", year: 2 },
+        { name: "神谷", eng: 32, trait: "優秀", year: 2 },
+        { name: "林", eng: 22, trait: "元気", year: 1 },
+        { name: "藤原", eng: 26, trait: "リーダー", year: 1 },
+        { name: "早川", eng: 38, trait: "のんびり", year: 3 },
+        { name: "下浦", eng: 24, trait: "真面目", year: 1 },
+        { name: "岡崎", eng: 29, trait: "積極的", year: 1 },
+        { name: "原田", eng: 24, trait: "元気", year: 1 },
+        { name: "三原", eng: 25, trait: "真面目", year: 1 },
+        { name: "鈴木", eng: 20, trait: "消極的", year: 1 },
+        { name: "坂口", eng: 22, trait: "真面目", year: 1 }
+    ];
+
+    const scenarios = {
+        1: {
+            char: "元部長",
+            text: "部員が私とあなただけじゃ廃部になってしまう。まずは仲間を増やそう！私もまだ在学中だから手伝うよ。",
+            action: "scout_required"
+        },
+        2: {
+            char: "元部長",
+            text: "新入部員、確保です！…でも、この子たち『Hello』の発音が「ハロー（棒読み）」ですよ。今週は地獄の特訓、いいですよね？",
+            action: "free"
+        },
+        3: {
+            char: "平野先生",
+            text: "ふん。新人が入ったそうだな。だが甘やかすつもりはない。しっかり鍛えろ。",
+            action: "free"
+        },
+        4: {
+            char: "元部長",
+            text: "ようやく『部活してるっぽい』雰囲気になってきましたね！この調子で、学校中の生徒に私たちの流暢なRとLの使い分けを見せつけちゃいましょう！",
+            action: "free"
+        },
+        5: {
+            char: "平野先生",
+            text: "来週、地区コンテストがあるんだ。2名を選抜して出場させよう。優勝すれば大きく成長できる！",
+            action: "free"
+        },
+        6: {
+            char: "掲示板",
+            text: "【本日開催】地区英語スピーチコンテスト。出場者2名を選んでください。",
+            action: "contest"
+        },
+        7: {
+            char: "元部長",
+            text: "コンテストが終わりましたね！後半戦も頑張りましょう！",
+            action: "free"
+        },
+        8: {
+            char: "平野先生",
+            text: "お前たちが書いたスピーチ原稿の添削で、私の赤いペンが3本もインク切れになった責任は取ってもらうぞ。最後まで続けろ。",
+            action: "free"
+        },
+        9: {
+            char: "元部長",
+            text: "もうすぐ最終週だね。悔いのないよう、全力で活動しよう！あ、部費が余ったら私に還元してもいいんだよ？",
+            action: "free"
+        },
+        10: {
+            char: "元部長",
+            text: "最終週です！私たちの『ESS MANAGER』、最高のエンディングを迎えましょう！",
+            action: "free"
+        }
+    };
+
+    function initGame() {
+        // 特性に成長率を設定
+        state.members.forEach(m => {
+            const trait = traitData[m.trait];
+            if (trait) {
+                m.growthRate = trait.growthRate;
+            }
+            if (m.burnout === undefined) {
+                m.burnout = false;
+            }
+        });
+        
+        document.getElementById('title-screen').classList.add('hidden');
+        document.getElementById('game-main').classList.remove('hidden');
+        loadWeek();
+    }
+
+    function loadWeek() {
+        state.hasActed = false;
+        
+        // バーンアウトチェック
+        checkBurnout();
+        
+        const scenario = scenarios[state.week] || {
+            char: "Nina",
+            text: "今週も頑張りましょう！",
+            action: "free"
+        };
+
+        document.getElementById('char-name').textContent = scenario.char;
+        document.getElementById('story-text').textContent = scenario.text;
+        
+        if (scenario.action === "scout_required") {
+            showScoutModal();
+        } else if (scenario.action === "contest") {
+            showContestModal();
+        } else {
+            renderActionButtons();
+        }
+        
+        updateUI();
+    }
+
+    function checkBurnout() {
+        let burnoutMessages = [];
+        state.members.forEach(m => {
+            if (m.stress >= 100 && !m.burnout) {
+                m.burnout = true;
+                m.eng = Math.floor(m.eng * 0.7); // 英語力30%減少
+                state.trust -= 15; // 信頼度低下
+                burnoutMessages.push(`${m.name}が燃え尽き症候群になってしまった！（英語力-30%、信頼度-15）`);
+            }
+        });
+        
+        if (burnoutMessages.length > 0) {
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <h2 style="margin-bottom: 20px; color: #f44336;">⚠️ 警告</h2>
+                    <div class="burnout-warning">
+                        ${burnoutMessages.join('<br>')}
+                    </div>
+                    <p style="margin: 15px 0;">燃え尽き症候群の部員は成長できません。親睦会などでケアしましょう。</p>
+                    <button onclick="this.closest('.modal').remove()" class="btn-next">確認</button>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+    }
+
+    function showScoutModal() {
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <h2 style="margin-bottom: 20px; color: #587196;">新入生スカウト</h2>
+                <p style="margin-bottom: 15px;">最大3名まで選んでスカウトできます（費用：¥500）</p>
+                <div id="recruit-list" class="member-grid"></div>
+                <button id="confirm-scout" class="btn-next" style="margin-top: 20px;">決定</button>
+            </div>
+        `;
+        document.body.appendChild(modal);
+
+        const selectedRecruits = [];
+        const recruitList = document.getElementById('recruit-list');
+        
+        // 既存の部員名リストを取得
+        const existingNames = state.members.map(m => m.name);
+        
+        // 既存部員を除外した候補者リスト
+        const availableCandidates = recruitPool.filter(r => !existingNames.includes(r.name));
+        const candidates = [...availableCandidates].sort(() => Math.random() - 0.5).slice(0, 6);
+        
+        candidates.forEach(r => {
+            const trait = traitData[r.trait];
+            const card = document.createElement('div');
+            card.className = 'recruit-card';
+            card.innerHTML = `
+                <h4>${r.name}（${r.year}年）</h4>
+                <div class="stat-label">英語力: ${r.eng}</div>
+                <div class="progress-bar"><div class="progress-fill" style="width:${r.eng/2}%"></div></div>
+                <div class="stat-label">特性: <span class="trait-tag ${trait.cssClass}">${r.trait}</span></div>
+                <div class="stat-label" style="font-size: 0.7em; color: #888;">${trait.desc}</div>
+            `;
+            card.onclick = () => {
+                if (card.classList.contains('selected')) {
+                    card.classList.remove('selected');
+                    const idx = selectedRecruits.indexOf(r);
+                    selectedRecruits.splice(idx, 1);
+                } else if (selectedRecruits.length < 3) {
+                    card.classList.add('selected');
+                    selectedRecruits.push(r);
+                }
+            };
+            recruitList.appendChild(card);
+        });
+
+        document.getElementById('confirm-scout').onclick = () => {
+            if (selectedRecruits.length > 0) {
+                state.budget -= 500;
+                selectedRecruits.forEach(r => {
+                    const trait = traitData[r.trait];
+                    state.members.push({ 
+                        ...r, 
+                        stress: 0,
+                        growthRate: trait.growthRate,
+                        burnout: false
+                    });
+                });
+                document.getElementById('story-text').textContent = `${selectedRecruits.map(r => r.name).join('、')}が入部しました！`;
+            } else {
+                document.getElementById('story-text').textContent = "今回はスカウトを見送りました。";
+            }
+            document.body.removeChild(modal);
+            state.hasActed = true;
+            updateUI();
+            renderActionButtons();
+        };
+    }
+
+function showContestModal() {
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <h2 style="margin-bottom: 20px; color: #5f8f8a;">コンテスト出場者選抜</h2>
+            <p style="margin-bottom: 15px;">参加費:¥1000</p>
+            <p style="margin-bottom: 15px;">2名を選んでください(燃え尽き症候群の部員は選べるません)</p>
+            <div id="contest-list" class="member-grid"></div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px;">
+                <button id="confirm-contest" class="btn-next" disabled>決定</button>
+                <button id="skip-contest" class="btn-choice">参加しない</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    const selectedMembers = [];
+    const contestList = document.getElementById('contest-list');
+
+    // 「参加しない」ボタンの処理（innerHTMLの外に記述）
+    document.getElementById('skip-contest').onclick = () => {
+        document.body.removeChild(modal);
+        document.getElementById('story-text').textContent = "今回はコンテスト参加を見送りました。";
+        state.hasActed = true;
+        state.contestDone = true;
+        updateUI();
+        renderActionButtons();
+    };
+
+    // メンバーリストの生成
+    state.members.forEach(m => {
+        const trait = traitData[m.trait];
+        const card = document.createElement('div');
+        card.className = `member-card ${m.burnout ? 'burnout' : ''}`;
+        card.innerHTML = `
+            <h4>${m.name}（${m.year}年）${m.burnout ? ' 🔥' : ''}</h4>
+            <div class="stat-label">英語力: ${m.eng}</div>
+            <div class="progress-bar"><div class="progress-fill" style="width:${m.eng / 2}%"></div></div>
+            <div class="stat-label">特性: <span class="trait-tag ${trait.cssClass}">${m.trait}</span></div>
+            ${m.burnout ? '<div class="stat-label" style="color: #f44336;">燃え尽き症候群</div>' : ''}
+        `;
+
+        if (!m.burnout) {
+            card.onclick = () => {
+                if (card.classList.contains('selected')) {
+                    card.classList.remove('selected');
+                    const idx = selectedMembers.indexOf(m);
+                    if (idx > -1) selectedMembers.splice(idx, 1);
+                } else if (selectedMembers.length < 2) {
+                    card.classList.add('selected');
+                    selectedMembers.push(m);
+                }
+                document.getElementById('confirm-contest').disabled = (selectedMembers.length !== 2);
+            };
+        } else {
+            card.style.cursor = 'not-allowed';
+            card.style.opacity = '0.6';
+        }
+        contestList.appendChild(card);
+    });
+
+    // 「決定」ボタンの処理
+    document.getElementById('confirm-contest').onclick = () => {
+        if (state.budget < 1000) {
+            alert('参加費が不足しています!');
+            return;
+        }
+
+        state.budget -= 1000;
+        const avgEng = (selectedMembers[0].eng + selectedMembers[1].eng) / 2;
+
+        let winChance = Math.min(90, avgEng * 0.6);
+        let secondChance = Math.min(95, avgEng * 0.75);
+
+        const roll = Math.random() * 100;
+        let result = "";
+        let prize = 0;
+        let engBonus = 0;
+        let trustBonus = 0;
+
+        if (roll < winChance) {
+            result = "🏆 優勝";
+            prize = 5000;
+            engBonus = 8;
+            trustBonus = 30;
+        } else if (roll < secondChance) {
+            result = "🥈 準優勝";
+            prize = 2000;
+            engBonus = 5;
+            trustBonus = 15;
+        } else {
+            result = "📝 参加賞";
+            prize = 500;
+            engBonus = 3;
+            trustBonus = 5;
+        }
+
+        // 成長処理
+        selectedMembers.forEach(m => {
+            const growth = Math.floor(engBonus * m.growthRate);
+            m.eng += growth;
+            if (m.eng > 200) m.eng = 200;
+        });
+
+        state.budget += prize;
+        state.trust += trustBonus;
+        state.contestDone = true;
+        state.hasActed = true;
+
+        // モーダル削除
+        document.body.removeChild(modal);
+
+        // 結果表示用モーダル
+        const resultModal = document.createElement('div');
+        resultModal.className = 'modal';
+        resultModal.innerHTML = `
+            <div class="modal-content">
+                <h2 style="margin-bottom: 20px; color: #607e8e;">コンテスト結果</h2>
+                <div class="result-box" style="font-size: 1.5rem; text-align: center; margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 8px;">${result}</div>
+                <p style="margin: 10px 0;">出場者: ${selectedMembers.map(m => m.name).join('と')}</p>
+                <p style="margin: 10px 0;">参加費: -¥1000</p> 
+                <p style="margin: 10px 0;">獲得賞金: ¥${prize}</p>
+                <p style="margin: 10px 0;">能力上昇: +${engBonus} (成長率反映済み)</p>
+                <p style="margin: 10px 0;">信頼度上昇: +${trustBonus}</p>
+                <button id="close-result" class="btn-next" style="margin-top: 20px;">閉じる</button>
+            </div>
+        `;
+        document.body.appendChild(resultModal);
+
+        document.getElementById('close-result').onclick = () => {
+            document.body.removeChild(resultModal);
+            document.getElementById('story-text').textContent = `コンテストで${result}を獲得しました！`;
+            updateUI();
+            renderActionButtons();
+        };
+    };
+}
+
+    function renderActionButtons() {
+        const panel = document.getElementById('action-panel');
+        panel.innerHTML = '';
+
+        const actions = [
+            { id: 'train', name: "📖 通常特訓", cost: 200, color: 'btn-action' },
+            { id: 'supertrain', name: "🔥 超特訓", cost: 800, color: 'btn-action' },
+            { id: 'work', name: "💼 翻訳バイト", cost: 0, color: 'btn-action' },
+            { id: 'hangout', name: "🎡 親睦会", cost: 300, color: 'btn-action' },
+            { id: 'scout', name: "🔍 スカウト", cost: 500, color: 'btn-action' }
+        ];
+
+        actions.forEach(a => {
+            const btn = document.createElement('button');
+            btn.className = a.color;
+            btn.textContent = a.cost > 0 ? `${a.name}(¥${a.cost})` : a.name;
+            btn.disabled = state.hasActed || (a.cost > 0 && state.budget < a.cost);
+            btn.onclick = () => executeAction(a.id);
+            panel.appendChild(btn);
+        });
+
+        const nextBtn = document.createElement('button');
+        nextBtn.className = 'btn-next';
+        nextBtn.textContent = state.hasActed ? "次週へ進む ⏭️" : "行動を選んでください";
+        nextBtn.disabled = !state.hasActed;
+        nextBtn.onclick = nextWeek;
+        panel.appendChild(nextBtn);
+    }
+
+    function executeAction(type) {
+        if (state.hasActed) return;
+        
+        let msg = "";
+        switch(type) {
+            case 'train':
+                state.budget -= 200;
+                state.members.forEach(m => { 
+                    if (!m.burnout) {
+                        const trait = traitData[m.trait];
+                        const growth = Math.floor(5 * m.growthRate);
+                        m.eng += growth;
+                        if (m.eng > 200) m.eng = 200;
+                        m.stress += Math.floor(15 * trait.stressRate);
+                    }
+                });
+                msg = "通常特訓で英語力が上がった！";
+                break;
+                
+            case 'supertrain':
+                state.budget -= 800;
+                state.members.forEach(m => { 
+                    if (!m.burnout) {
+                        const trait = traitData[m.trait];
+                        const growth = Math.floor(15 * m.growthRate);
+                        m.eng += growth;
+                        if (m.eng > 200) m.eng = 200;
+                        m.stress += Math.floor(35 * trait.stressRate);
+                    }
+                });
+                msg = "超特訓でかなり英語力が上がった！！";
+                break;
+                
+            case 'scout':
+                showScoutModal();
+                return;
+                
+            case 'work':
+                const reward = 800;
+                state.budget += reward;
+                state.members.forEach(m => {
+                    const trait = traitData[m.trait];
+                    m.stress += Math.floor(20 * trait.stressRate);
+                });
+                msg = `バイトで¥${reward}稼ぎました！`;
+                break;
+                
+            case 'hangout':
+                state.budget -= 300;
+                state.members.forEach(m => m.stress = Math.max(0, m.stress - 30));
+                state.trust += 10;
+                msg = "親睦会でみんなの絆が深まった！";
+                break;
+        }
+
+        state.hasActed = true;
+        document.getElementById('story-text').textContent = msg;
+        updateUI();
+        renderActionButtons();
+    }
+
+    function nextWeek() {
+        state.week++;
+        if (state.week > state.maxWeek) {
+            endYear();
+        } else {
+            loadWeek();
+        }
+    }
+
+    function endYear() {
+        const graduating = state.members.filter(m => m.year >= 5);
+        const continuing = state.members.filter(m => m.year < 5);
+        
+        continuing.forEach(m => m.year++);
+        
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        
+        let graduationMsg = "";
+        if (graduating.length > 0) {
+            graduationMsg = `<p style="color: #ff6f00; font-weight: bold; margin: 15px 0;">
+                🎓 ${graduating.map(m => m.name).join('、')}が卒業しました
+            </p>`;
+        updateGraduationStats(graduating.length);
+        }
+        
+        modal.innerHTML = `
+            <div class="modal-content">
+                <h2 style="margin-bottom: 20px; color: #628c8b;">年度終了</h2>
+                <div style="background: #f1f2f6; padding: 20px; border-radius: 10px; margin: 15px 0;">
+                    <p style="font-size: 1.3em; margin: 10px 0;">第${state.year}年度が終了しました</p>
+                    ${graduationMsg}
+                    <p style="margin: 10px 0;">継続部員: ${continuing.length}名</p>
+                    <p style="margin: 10px 0;">平均英語力: ${Math.floor(continuing.reduce((a, b) => a + b.eng, 0) / Math.max(continuing.length, 1))}</p>
+                    <p style="margin: 10px 0;">現在の部費: ¥${state.budget}</p>
+                    <p style="margin: 10px 0;">信頼度: ${state.trust}</p>
+                </div>
+                <button id="continue-next-year" class="btn-next" style="margin: 10px 0;">次の年度へ進む</button>
+                <button id="end-game-now" class="btn-choice" style="margin: 10px 0;">活動を終了する</button>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        
+        document.getElementById('continue-next-year').onclick = () => {
+            state.year++;
+            state.week = 1;
+            state.members = continuing;
+            state.hasActed = false;
+            state.contestDone = false;
+            // 次の年度に向けたボーナス（信頼度に応じて予算追加など）
+            state.budget += state.trust * 10;
+            
+            document.body.removeChild(modal);
+            initGame(); // 新しい年度として初期化（またはloadWeek）
+        };
+
+        document.getElementById('end-game-now').onclick = () => {
+            location.reload(); // タイトルに戻る
+        };
+    }
+
+    function updateUI() {
+        // ステータスバーの更新
+        document.getElementById('display-week').textContent = `第 ${state.week} 週`;
+        document.getElementById('stat-year').textContent = `${state.year}年目`;
+        document.getElementById('stat-budget').textContent = `¥${state.budget}`;
+        document.getElementById('stat-members').textContent = `${state.members.length}人`;
+        
+        const avgEng = state.members.length > 0 
+            ? Math.floor(state.members.reduce((sum, m) => sum + m.eng, 0) / state.members.length) 
+            : 0;
+        document.getElementById('stat-eng').textContent = avgEng;
+        document.getElementById('stat-trust').textContent = state.trust;
+
+        // 部員リストの表示更新
+        const memberList = document.getElementById('member-list');
+        memberList.innerHTML = '';
+        
+        state.members.forEach(m => {
+            const trait = traitData[m.trait] || { cssClass: 'trait-steady', desc: '標準' };
+            const card = document.createElement('div');
+            card.className = `member-card ${m.year >= 5 ? 'graduating' : ''}`;
+            card.innerHTML = `
+                <div class="char-name">${m.name} (${m.year}年生)</div>
+                <div class="stat-label">英語力: ${m.eng}</div>
+                <div class="progress-bar"><div class="progress-fill" style="width:${m.eng}%"></div></div>
+                <div class="stat-label">ストレス: ${m.stress}</div>
+                <div class="progress-bar"><div class="progress-fill" style="width:${m.stress}%; background:#ff4757;"></div></div>
+                <div class="stat-label">特性: <span class="trait-tag ${trait.cssClass}">${m.trait}</span></div>
+            `;
+            memberList.appendChild(card);
+        });
+    }
+
+    // 起動時にタイトル画面を表示
+    window.onload = () => {
+        document.getElementById('game-main').classList.add('hidden');
+    };
+    
+    
+    
+    // ============================================
+// 1. セーブ/ロード機能
+// ============================================
+
+function saveGame() {
+    const saveData = {
+        state: state,
+        timestamp: new Date().toISOString(),
+        version: "1.0"
+    };
+    
+    const saveSlots = JSON.parse(localStorage.getItem('essManagerSaves')) || {};
+    const slotKey = `slot_${Date.now()}`;
+    saveSlots[slotKey] = saveData;
+    
+    // 最大5個のセーブデータを保持
+    const slots = Object.keys(saveSlots);
+    if (slots.length > 5) {
+        delete saveSlots[slots[0]];
+    }
+    
+    localStorage.setItem('essManagerSaves', JSON.stringify(saveSlots));
+    
+    showNotification("💾 ゲームをセーブしました！", "success");
+}
+
+function loadGame() {
+    const saveSlots = JSON.parse(localStorage.getItem('essManagerSaves')) || {};
+    
+    if (Object.keys(saveSlots).length === 0) {
+        showNotification("📂 セーブデータがありません", "info");
+        return;
+    }
+    
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <h2 style="margin-bottom: 20px;">ロード</h2>
+            <div id="save-slot-list"></div>
+            <button onclick="this.closest('.modal').remove()" class="btn-choice" style="margin-top: 20px;">キャンセル</button>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    
+    const slotList = document.getElementById('save-slot-list');
+    
+    Object.entries(saveSlots).reverse().forEach(([key, data]) => {
+        const date = new Date(data.timestamp);
+        const slot = document.createElement('div');
+        slot.className = 'save-slot';
+        slot.innerHTML = `
+            <div class="save-slot-header">
+                <div class="save-slot-title">第${data.state.year}年度 第${data.state.week}週</div>
+                <div class="save-slot-date">${date.toLocaleDateString()} ${date.toLocaleTimeString()}</div>
+            </div>
+            <div class="save-slot-info">
+                <span>部員: ${data.state.members.length}人</span>
+                <span>部費: ¥${data.state.budget}</span>
+                <span>信頼: ${data.state.trust}</span>
+            </div>
+        `;
+        slot.onclick = () => {
+            Object.assign(state, data.state);
+            document.body.removeChild(modal);
+            document.getElementById('title-screen').classList.add('hidden');
+            document.getElementById('game-main').classList.remove('hidden');
+            loadWeek();
+            showNotification("📂 ゲームをロードしました！", "success");
+        };
+        slotList.appendChild(slot);
+    });
+}
+
+// 簡易通知システム
+function showNotification(message, type = "info") {
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: ${type === 'success' ? '#4caf50' : type === 'error' ? '#f44336' : '#2196f3'};
+        color: white;
+        padding: 15px 25px;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        z-index: 4000;
+        animation: notificationSlideIn 0.3s ease;
+    `;
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.style.animation = 'notificationSlideIn 0.3s ease reverse';
+        setTimeout(() => notification.remove(), 300);
+    }, 2000);
+}
+
+// ============================================
+// 実績システム（修正版）
+// ============================================
+
+const achievements = {
+    perfect_year: {
+        id: "perfect_year",
+        name: "完璧な年度運営",
+        desc: "年度終了時に全員ストレス50以下",
+        icon: "⭐",
+        unlocked: false,
+        unlockedDate: null
+    },
+    english_master: {
+        id: "english_master",
+        name: "英語マスター",
+        desc: "全員の英語力を50以上にする",
+        icon: "📚",
+        unlocked: false,
+        unlockedDate: null
+    },
+    rich_club: {
+        id: "rich_club",
+        name: "資金潤沢",
+        desc: "部費が10000円以上になる",
+        icon: "💰",
+        unlocked: false,
+        unlockedDate: null
+    },
+    trust_max: {
+        id: "trust_max",
+        name: "絶対的信頼",
+        desc: "信頼度が100以上になる",
+        icon: "❤️",
+        unlocked: false,
+        unlockedDate: null
+    },
+    big_club: {
+        id: "big_club",
+        name: "大所帯",
+        desc: "部員が10人以上になる",
+        icon: "👥",
+        unlocked: false,
+        unlockedDate: null
+    },
+    no_burnout: {
+        id: "no_burnout",
+        name: "燃え尽き回避",
+        desc: "1年間誰も燃え尽き症候群にならない",
+        icon: "🛡️",
+        unlocked: false,
+        unlockedDate: null
+    },
+    super_growth: {
+        id: "super_growth",
+        name: "急成長",
+        desc: "1人の部員の英語力を1年で30以上上げる",
+        icon: "📈",
+        unlocked: false,
+        unlockedDate: null
+    },
+    stress_free: {
+        id: "stress_free",
+        name: "ストレスフリー",
+        desc: "全員のストレスを0にする",
+        icon: "😊",
+        unlocked: false,
+        unlockedDate: null
+    },
+    elite_team: {
+        id: "elite_team",
+        name: "エリート集団",
+        desc: "平均英語力が100を超える",
+        icon: "🌟",
+        unlocked: false,
+        unlockedDate: null
+    },
+    close_call: {
+        id: "close_call",
+        name: "危機一髪",
+        desc: "ストレス90以上の部員がいる状態から燃え尽き回避",
+        icon: "⚡",
+        unlocked: false,
+        unlockedDate: null
+    },
+    diversity: {
+        id: "diversity",
+        name: "多様性",
+        desc: "5種類以上の異なる特性を持つ部員を集める",
+        icon: "🌈",
+        unlocked: false,
+        unlockedDate: null
+    },
+    legend: {
+        id: "legend",
+        name: "レジェンド",
+        desc: "5年目に到達する",
+        icon: "🏆",
+        unlocked: false,
+        unlockedDate: null
+    },
+    educator: {
+        id: "educator",
+        name: "教育者",
+        desc: "累計で20人以上の部員を卒業させる",
+        icon: "📚",
+        unlocked: false,
+        unlockedDate: null
+    },
+    chaos: {
+        id: "chaos",
+        name: "カオス",
+        desc: "全員がストレス80以上の状態を作る",
+        icon: "😱",
+        unlocked: false,
+        unlockedDate: null
+    }
+    
+};
+
+// グローバル累計データ（セーブデータとは別に永続化）
+let globalStats = {
+    totalGraduates: 0,
+    totalBudgetEarned: 0,
+    hasHadHighStress: false, // 危機一髪フラグ
+    hasHadChaos: false // カオスフラグ
+};
+
+// グローバル統計の読み込み
+function loadGlobalStats() {
+    const saved = localStorage.getItem('essManagerGlobalStats');
+    if (saved) {
+        globalStats = JSON.parse(saved);
+    }
+}
+
+// グローバル統計の保存
+function saveGlobalStats() {
+    localStorage.setItem('essManagerGlobalStats', JSON.stringify(globalStats));
+}
+
+// 実績データをローカルストレージから読み込み
+function loadAchievements() {
+    const saved = localStorage.getItem('essManagerAchievements');
+    if (saved) {
+        const savedData = JSON.parse(saved);
+        Object.keys(savedData).forEach(key => {
+            if (achievements[key]) {
+                achievements[key].unlocked = savedData[key].unlocked;
+                achievements[key].unlockedDate = savedData[key].unlockedDate;
+            }
+        });
+    }
+    loadGlobalStats();
+    updateAchievementCount();
+}
+
+// 実績データを保存
+function saveAchievements() {
+    localStorage.setItem('essManagerAchievements', JSON.stringify(achievements));
+    saveGlobalStats();
+}
+
+// 部員の初期英語力を記録（新星発掘用）
+function trackMemberInitialStats() {
+    state.members.forEach(m => {
+        if (m.initialEng === undefined) {
+            m.initialEng = m.eng;
+        }
+    });
+}
+
+// 実績チェック
+function checkAchievements() {
+    // 完璧な年度運営
+    if (!achievements.perfect_year.unlocked && state.week === state.maxWeek) {
+        const allLowStress = state.members.every(m => m.stress <= 50);
+        if (allLowStress) {
+            unlockAchievement('perfect_year');
+        }
+    }
+    
+    // 英語マスター
+    if (!achievements.english_master.unlocked) {
+        const allHighEng = state.members.length > 0 && state.members.every(m => m.eng >= 50);
+        if (allHighEng) {
+            unlockAchievement('english_master');
+        }
+    }
+    
+    
+    // 絶対的信頼
+    if (!achievements.trust_max.unlocked && state.trust >= 100) {
+        unlockAchievement('trust_max');
+    }
+    
+    // 大所帯
+    if (!achievements.big_club.unlocked && state.members.length >= 10) {
+        unlockAchievement('big_club');
+    }
+    
+    // 燃え尽き回避
+    if (!achievements.no_burnout.unlocked && state.week === state.maxWeek) {
+        const noBurnout = state.members.every(m => !m.burnout);
+        if (noBurnout) {
+            unlockAchievement('no_burnout');
+        }
+    }
+    
+    // ストレスフリー
+    if (!achievements.stress_free.unlocked) {
+        const allZeroStress = state.members.length > 0 && state.members.every(m => m.stress === 0);
+        if (allZeroStress) {
+            unlockAchievement('stress_free');
+        }
+    }
+    
+    // エリート集団
+    if (!achievements.elite_team.unlocked && state.members.length > 0) {
+        const avgEng = state.members.reduce((sum, m) => sum + m.eng, 0) / state.members.length;
+        if (avgEng >= 100) {
+            unlockAchievement('elite_team');
+        }
+    }
+    
+    // 危機一髪（ストレス90以上の部員がいるかチェック）
+    const hasHighStress = state.members.some(m => m.stress >= 90);
+    if (hasHighStress) {
+        globalStats.hasHadHighStress = true;
+        saveGlobalStats();
+    }
+    
+    // 危機一髪（年度終了時に燃え尽き無しでクリア）
+    if (!achievements.close_call.unlocked && state.week === state.maxWeek) {
+        const noBurnout = state.members.every(m => !m.burnout);
+        if (noBurnout && globalStats.hasHadHighStress) {
+            unlockAchievement('close_call');
+            globalStats.hasHadHighStress = false; // リセット
+            saveGlobalStats();
+        }
+    }
+    
+    // 多様性（5種類以上の異なる特性）
+    if (!achievements.diversity.unlocked && state.members.length >= 5) {
+        const uniqueTraits = new Set(state.members.map(m => m.trait));
+        if (uniqueTraits.size >= 5) {
+            unlockAchievement('diversity');
+        }
+    }
+   
+    
+    // レジェンド（5年目到達）
+    if (!achievements.legend.unlocked && state.year >= 5) {
+        unlockAchievement('legend');
+    }
+    
+    // 教育者（累計20人以上卒業）
+    if (!achievements.educator.unlocked && globalStats.totalGraduates >= 20) {
+        unlockAchievement('educator');
+    }
+    
+
+    // カオス（全員がストレス80以上）
+    if (!achievements.chaos.unlocked && state.members.length > 0) {
+        const allHighStress = state.members.every(m => m.stress >= 80);
+        if (allHighStress && !globalStats.hasHadChaos) {
+            unlockAchievement('chaos');
+            globalStats.hasHadChaos = true;
+            saveGlobalStats();
+        }
+    }
+}
+
+// 実績解除
+function unlockAchievement(id) {
+    if (!achievements[id] || achievements[id].unlocked) return;
+    
+    achievements[id].unlocked = true;
+    achievements[id].unlockedDate = new Date().toISOString();
+    saveAchievements();
+    updateAchievementCount();
+    
+    // 通知表示
+    const notification = document.getElementById('achievement-notification');
+    notification.querySelector('.notification-desc').textContent = achievements[id].name;
+    notification.classList.remove('hidden');
+    
+    setTimeout(() => {
+        notification.classList.add('hidden');
+    }, 4000);
+}
+
+// 実績カウント更新
+function updateAchievementCount() {
+    const total = Object.keys(achievements).length;
+    const unlocked = Object.values(achievements).filter(a => a.unlocked).length;
+    const badge = document.getElementById('achievement-count');
+    if (badge) {
+        badge.textContent = `${unlocked}/${total}`;
+    }
+}
+
+// 実績モーダル表示
+function showAchievementModal() {
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <h2 style="margin-bottom: 20px;">🏆 実績一覧</h2>
+            <div class="achievement-grid" id="achievement-grid"></div>
+            <button onclick="this.closest('.modal').remove()" class="btn-next" style="margin-top: 20px;">閉じる</button>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    
+    const grid = document.getElementById('achievement-grid');
+    
+    Object.values(achievements).forEach(ach => {
+        const card = document.createElement('div');
+        card.className = `achievement-card ${ach.unlocked ? 'unlocked' : 'locked'}`;
+        
+        let dateStr = '';
+        if (ach.unlocked && ach.unlockedDate) {
+            const date = new Date(ach.unlockedDate);
+            dateStr = `<div class="achievement-date">解除日: ${date.toLocaleDateString()}</div>`;
+        }
+        
+        card.innerHTML = `
+            <div class="achievement-icon">${ach.icon}</div>
+            <div class="achievement-name">${ach.name}</div>
+            <div class="achievement-desc">${ach.desc}</div>
+            ${dateStr}
+        `;
+        grid.appendChild(card);
+    });
+}
+
+// 卒業処理時に呼び出す関数（endYear関数内で使用）
+function updateGraduationStats(graduatingCount) {
+    globalStats.totalGraduates += graduatingCount;
+    saveGlobalStats();
+}
+
+// 部費獲得時に呼び出す関数（executeAction、コンテスト報酬などで使用）
+function updateBudgetStats(amount) {
+    if (amount > 0) {
+        globalStats.totalBudgetEarned += amount;
+        saveGlobalStats();
+    }
+}
+
+
+// ============================================
+// 3. ランダムイベントシステム
+// ============================================
+
+const randomEvents = [
+    {
+        id: "festival_prep",
+        name: "学園祭準備の依頼",
+        desc: "生徒会から「英語でのアナウンスをお願いします！」と頼まれました。",
+        icon: "🎪",
+        type: "neutral",
+        chance: 0.15,
+        effects: {
+            stress: 20,
+            trust: 15
+        },
+        message: "ストレス+20、信頼度+15"
+    },
+    {
+        id: "teacher_gift",
+        name: "先生の差し入れ",
+        desc: "平野先生が「たまには休め」とお菓子を差し入れてくれました。",
+        icon: "🍰",
+        type: "positive",
+        chance: 0.12,
+        effects: {
+            stress: -10
+        },
+        message: "全員のストレス-10"
+    },
+    {
+        id: "flu_outbreak",
+        name: "インフルエンザ流行",
+        desc: "学校でインフルエンザが流行中。ランダムな部員が1週間休むことに…",
+        icon: "🤒",
+        type: "negative",
+        chance: 0.1,
+        effects: {
+            absentee: 1
+        },
+        message: "1名が欠席"
+    },
+    {
+        id: "english_camp",
+        name: "英語キャンプの誘い",
+        desc: "近隣校と合同で英語キャンプを開催するとのこと。",
+        icon: "🏕️",
+        type: "positive",
+        chance: 0.08,
+        effects: {
+            eng: 8,
+            stress: 15,
+            budget: -300
+        },
+        message: "英語力+8、ストレス+15、部費-¥300"
+    },
+    {
+        id: "equipment_broken",
+        name: "機材の故障",
+        desc: "プロジェクターが故障してしまいました。修理が必要です。",
+        icon: "💔",
+        type: "negative",
+        chance: 0.1,
+        effects: {
+            budget: -1400
+        },
+        message: "部費-¥1400"
+    },
+    {
+        id: "alumni_visit",
+        name: "OB・OGの訪問",
+        desc: "卒業生が訪ねてきて、励ましの言葉とお金をくれました！",
+        icon: "👋",
+        type: "positive",
+        chance: 0.1,
+        effects: {
+            budget: 600,
+            trust: 5
+        },
+        message: "部費+¥600、信頼度+5"
+    },
+    {
+        id: "rainy_week",
+        name: "連日の雨",
+        desc: "1週間ずっと雨で気分が晴れません…みんなのモチベーションが下がっています。",
+        icon: "🌧️",
+        type: "negative",
+        chance: 0.1,
+        effects: {
+            stress: 10,
+            trust: -5
+        },
+        message: "ストレス+10、信頼度-5"
+    },
+    {
+        id: "motivational_speaker",
+        name: "特別講師の訪問",
+        desc: "プロの通訳者が特別講義をしてくれることになりました！",
+        icon: "🎤",
+        type: "positive",
+        chance: 0.08,
+        effects: {
+            eng: 5,
+            trust: 5
+        },
+        message: "英語力+5、信頼度+5"
+    }
+];
+
+// ランダムイベント抽選
+function checkRandomEvent() {
+    // 20%の確率でイベント判定
+    if (Math.random() > 0.2) return null;
+    
+    const availableEvents = randomEvents.filter(e => Math.random() < e.chance);
+    if (availableEvents.length === 0) return null;
+    
+    return availableEvents[Math.floor(Math.random() * availableEvents.length)];
+}
+
+// イベント実行
+function triggerRandomEvent(event) {
+    const modal = document.createElement('div');
+    modal.className = 'modal event-card-modal';
+    modal.innerHTML = `
+        <div class="modal-content event-card ${event.type}">
+            <div class="event-icon">${event.icon}</div>
+            <div class="event-title">${event.name}</div>
+            <div class="event-description">${event.desc}</div>
+            <div class="event-effects">
+                <div class="event-effect-item">
+                    <span>効果:</span>
+                    <span class="${event.type === 'positive' ? 'event-effect-positive' : event.type === 'negative' ? 'event-effect-negative' : ''}">${event.message}</span>
+                </div>
+            </div>
+            <button onclick="applyEventEffects(this, ${JSON.stringify(event).replace(/"/g, '&quot;')})" class="btn-next">了解</button>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+// イベント効果適用
+function applyEventEffects(button, event) {
+    const effects = event.effects;
+    
+    state.members.forEach(m => {
+        if (effects.stress) m.stress = Math.max(0, Math.min(100, m.stress + effects.stress));
+        if (effects.eng && !m.burnout) {
+            const growth = Math.floor(effects.eng * m.growthRate);
+            m.eng = Math.min(200, m.eng + growth);
+        }
+    });
+    
+    if (effects.trust) state.trust = Math.max(0, state.trust + effects.trust);
+    if (effects.budget) state.budget += effects.budget;
+    
+    if (effects.absentee) {
+        const availableMembers = state.members.filter(m => !m.burnout);
+        if (availableMembers.length > 0) {
+            const absentee = availableMembers[Math.floor(Math.random() * availableMembers.length)];
+            absentee.stress += 10; // 欠席によるストレス
+        }
+    }
+    
+    button.closest('.modal').remove();
+    updateUI();
+}
+
+// ============================================
+// 既存関数への統合
+// ============================================
+
+// initGame関数に追加
+const originalInitGame = window.initGame;
+window.initGame = function() {
+    loadAchievements();
+    if (originalInitGame) originalInitGame();
+};
+
+// loadWeek関数に追加（ランダムイベントチェック）
+const originalLoadWeek = window.loadWeek;
+window.loadWeek = function() {
+    if (originalLoadWeek) originalLoadWeek();
+    
+    // ランダムイベントチェック（第1週と最終週以外）
+    if (state.week > 1 && state.week < state.maxWeek) {
+        const event = checkRandomEvent();
+        if (event) {
+            setTimeout(() => triggerRandomEvent(event), 500);
+        }
+    }
+    
+    // 実績チェック
+    checkAchievements();
+};
+
+// updateUI関数に実績チェックを追加
+const originalUpdateUI = window.updateUI;
+window.updateUI = function() {
+    if (originalUpdateUI) originalUpdateUI();
+    checkAchievements();
+};
+    
+    
+    
+</script>
+</body>
+</html>
